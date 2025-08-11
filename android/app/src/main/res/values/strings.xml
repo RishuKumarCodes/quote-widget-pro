@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">quoteWidgetPro</string>
+    <string name="app_name">Quote Widget Pro</string>
+    <string name="default_quote">The only way to do great work is to love what you do.</string>
+    <string name="default_author">Steve Jobs</string>
+    <string name="widget_name">Quote Widget</string>
+    <string name="widget_description">Display inspiring quotes on your home screen</string>
 </resources>

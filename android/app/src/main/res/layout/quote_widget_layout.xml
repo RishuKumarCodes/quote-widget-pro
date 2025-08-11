@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:id="@+id/widget_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="12dp"
+        android:background="@drawable/widget_background">
+
+        <TextView
+            android:id="@+id/quote_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/default_quote"
+            android:textSize="14sp"
+            android:textColor="#FF000000"
+            android:gravity="center"
+            android:fontFamily="sans-serif"
+            android:lineSpacingExtra="2dp" />
+
+        <TextView
+            android:id="@+id/quote_author"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/default_author"
+            android:textSize="12sp"
+            android:textColor="#FF666666"
+            android:gravity="center"
+            android:fontFamily="sans-serif"
+            android:layout_marginTop="4dp"
+            android:textStyle="italic" />
+
+    </LinearLayout>
+
+</LinearLayout>
