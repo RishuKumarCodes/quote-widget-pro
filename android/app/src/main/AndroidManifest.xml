@@ -11,7 +11,9 @@
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
-      android:theme="@style/AppTheme">
+      android:theme="@style/AppTheme"
+      android:supportsRtl="true"
+      android:extractNativeLibs="false">
       
       <activity
         android:name=".MainActivity"
@@ -19,7 +21,8 @@
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
-        android:exported="true">
+        android:exported="true"
+        android:theme="@style/AppTheme">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
@@ -35,6 +38,8 @@
               <action android:name="android.appwidget.action.APPWIDGET_ENABLED" />
               <action android:name="android.appwidget.action.APPWIDGET_DISABLED" />
               <action android:name="com.quotewidgetpro.ACTION_UPDATE_WIDGET" />
+              <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+              <action android:name="android.intent.action.WALLPAPER_CHANGED" />
           </intent-filter>
           <meta-data android:name="android.appwidget.provider"
               android:resource="@xml/quote_widget_info" />
@@ -43,7 +48,7 @@
       <!-- Quote Widget Configuration Activity -->
       <activity android:name=".widget.QuoteWidgetConfigureActivity"
           android:exported="true"
-          android:theme="@android:style/Theme.DeviceDefault.Dialog">
+          android:theme="@style/AppTheme">
           <intent-filter>
               <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
           </intent-filter>

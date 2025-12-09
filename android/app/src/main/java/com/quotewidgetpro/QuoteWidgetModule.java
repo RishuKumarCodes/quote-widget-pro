@@ -47,16 +47,43 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
                 editor.putInt("font_size_" + widgetId, settings.getInt("fontSize"));
             }
             if (settings.hasKey("textColor")) {
-                editor.putInt("text_color_" + widgetId, Color.parseColor(settings.getString("textColor")));
+                String textColor = settings.getString("textColor");
+                if ("device".equals(textColor)) {
+                    editor.putString("text_color_type_" + widgetId, "device");
+                    editor.remove("text_color_" + widgetId); // Remove custom color when using device
+                } else {
+                    editor.putString("text_color_type_" + widgetId, "custom");
+                    try {
+                        editor.putInt("text_color_" + widgetId, Color.parseColor(textColor));
+                    } catch (IllegalArgumentException e) {
+                        android.util.Log.w("QuoteWidget", "Invalid color format: " + textColor + ", using default");
+                        editor.putInt("text_color_" + widgetId, Color.BLACK);
+                    }
+                }
             }
             if (settings.hasKey("isBold")) {
                 editor.putBoolean("is_bold_" + widgetId, settings.getBoolean("isBold"));
             }
             if (settings.hasKey("backgroundColor")) {
-                editor.putInt("background_color_" + widgetId, Color.parseColor(settings.getString("backgroundColor")));
+                String bgColor = settings.getString("backgroundColor");
+                if ("device".equals(bgColor)) {
+                    editor.putString("background_color_type_" + widgetId, "device");
+                    editor.remove("background_color_" + widgetId); // Remove custom color when using device
+                } else {
+                    editor.putString("background_color_type_" + widgetId, "custom");
+                    try {
+                        editor.putInt("background_color_" + widgetId, Color.parseColor(bgColor));
+                    } catch (IllegalArgumentException e) {
+                        android.util.Log.w("QuoteWidget", "Invalid color format: " + bgColor + ", using default");
+                        editor.putInt("background_color_" + widgetId, Color.WHITE);
+                    }
+                }
             }
             if (settings.hasKey("backgroundType")) {
                 editor.putString("background_type_" + widgetId, settings.getString("backgroundType"));
+            }
+            if (settings.hasKey("backgroundOpacity")) {
+                editor.putFloat("background_opacity_" + widgetId, (float) settings.getDouble("backgroundOpacity"));
             }
             if (settings.hasKey("borderRadius")) {
                 editor.putInt("border_radius_" + widgetId, settings.getInt("borderRadius"));
@@ -128,16 +155,35 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
 
             WritableMap settings = new WritableNativeMap();
             
-            // Check if widget-specific settings exist, otherwise use default settings (same logic as widget provider)
+            // Check if widget-specific settings exist, otherwise use default settings
             boolean hasWidgetSettings = prefs.contains("font_family_" + widgetId);
             String suffix = hasWidgetSettings ? "_" + widgetId : "_0";
             
             settings.putString("fontFamily", prefs.getString("font_family" + suffix, "sans-serif"));
             settings.putInt("fontSize", prefs.getInt("font_size" + suffix, 14));
-            settings.putString("textColor", String.format("#%08X", prefs.getInt("text_color" + suffix, Color.BLACK)));
+            
+            // Handle text color
+            String textColorType = prefs.getString("text_color_type" + suffix, "custom");
+            if ("device".equals(textColorType)) {
+                settings.putString("textColor", "device");
+            } else {
+                int textColorInt = prefs.getInt("text_color" + suffix, Color.BLACK);
+                settings.putString("textColor", String.format("#%08X", (0xFFFFFFFF & textColorInt)));
+            }
+            
             settings.putBoolean("isBold", prefs.getBoolean("is_bold" + suffix, false));
-            settings.putString("backgroundColor", String.format("#%08X", prefs.getInt("background_color" + suffix, Color.WHITE)));
+            
+            // Handle background color
+            String backgroundColorType = prefs.getString("background_color_type" + suffix, "custom");
+            if ("device".equals(backgroundColorType)) {
+                settings.putString("backgroundColor", "device");
+            } else {
+                int backgroundColorInt = prefs.getInt("background_color" + suffix, Color.WHITE);
+                settings.putString("backgroundColor", String.format("#%08X", (0xFFFFFFFF & backgroundColorInt)));
+            }
+            
             settings.putString("backgroundType", prefs.getString("background_type" + suffix, "solid"));
+            settings.putDouble("backgroundOpacity", prefs.getFloat("background_opacity" + suffix, 1.0f));
             settings.putInt("borderRadius", prefs.getInt("border_radius" + suffix, 12));
             settings.putInt("refreshInterval", prefs.getInt("refresh_interval" + suffix, 60));
             settings.putBoolean("autoTheme", prefs.getBoolean("auto_theme" + suffix, false));

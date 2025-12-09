@@ -1,5 +1,6 @@
 import React from 'react';
-import {View, StyleSheet, ViewStyle} from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
+import Slider from '@react-native-community/slider';
 
 interface Props {
   value: number;
@@ -18,21 +19,18 @@ const SimpleSlider: React.FC<Props> = ({
   onValueChange,
   style,
 }) => {
-  const sliderWidth = 280;
-  const thumbWidth = 20;
-  const percentage = (value - minimumValue) / (maximumValue - minimumValue);
-  const position = percentage * (sliderWidth - thumbWidth);
-
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.track} />
-      <View
-        style={[
-          styles.thumb,
-          {
-            left: position,
-          },
-        ]}
+      <Slider
+        style={styles.slider}
+        value={value}
+        minimumValue={minimumValue}
+        maximumValue={maximumValue}
+        step={step}
+        onValueChange={onValueChange}
+        minimumTrackTintColor="#007bff"
+        maximumTrackTintColor="#dee2e6"
+        thumbTintColor="#007bff"
       />
     </View>
   );
@@ -40,23 +38,13 @@ const SimpleSlider: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 40,
+    alignItems: 'center',
+    paddingVertical: 10,
+    width: '100%',
+  },
+  slider: {
     width: 280,
-    justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  track: {
-    height: 4,
-    backgroundColor: '#dee2e6',
-    borderRadius: 2,
-  },
-  thumb: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    backgroundColor: '#007bff',
-    borderRadius: 10,
-    top: 10,
+    height: 40,
   },
 });
 

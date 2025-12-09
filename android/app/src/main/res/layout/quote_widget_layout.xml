@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="4dp">
+
+    <ImageView
+        android:id="@+id/widget_background_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/widget_background_12dp"
+        android:scaleType="fitXY" />
 
     <LinearLayout
         android:id="@+id/widget_container"
@@ -11,8 +17,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="12dp"
-        android:background="@drawable/widget_background">
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/quote_text"
@@ -23,7 +28,10 @@
             android:textColor="#FF000000"
             android:gravity="center"
             android:fontFamily="sans-serif"
-            android:lineSpacingExtra="2dp" />
+            android:lineSpacingExtra="2dp"
+            android:layout_weight="1"
+            android:maxLines="4"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/quote_author"
@@ -34,9 +42,11 @@
             android:textColor="#FF666666"
             android:gravity="center"
             android:fontFamily="sans-serif"
-            android:layout_marginTop="4dp"
-            android:textStyle="italic" />
+            android:layout_marginTop="8dp"
+            android:textStyle="italic"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

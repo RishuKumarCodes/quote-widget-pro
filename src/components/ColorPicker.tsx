@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, TouchableOpacity, StyleSheet, Text} from 'react-native';
 
 interface Props {
   color: string;
@@ -19,6 +19,17 @@ const ColorPicker: React.FC<Props> = ({color, onColorChange}) => {
 
   return (
     <View style={styles.container}>
+      {/* Device Theme Option */}
+      <TouchableOpacity
+        style={[styles.deviceOption, color === 'device' && styles.deviceOptionSelected]}
+        onPress={() => onColorChange('device')}>
+        <Text style={[styles.deviceOptionText, color === 'device' && styles.deviceOptionTextSelected]}>
+          📱 Use Device Theme
+        </Text>
+      </TouchableOpacity>
+      
+      <View style={styles.separator} />
+      
       <View style={styles.colorGrid}>
         {predefinedColors.map((colorOption, index) => (
           <TouchableOpacity
@@ -38,7 +49,33 @@ const ColorPicker: React.FC<Props> = ({color, onColorChange}) => {
 
 const styles = StyleSheet.create({
   container: {
-    maxHeight: 200,
+    maxHeight: 280,
+  },
+  deviceOption: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: '#dee2e6',
+    alignItems: 'center',
+  },
+  deviceOptionSelected: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
+  },
+  deviceOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6c757d',
+  },
+  deviceOptionTextSelected: {
+    color: '#fff',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#dee2e6',
+    marginVertical: 10,
   },
   colorGrid: {
     flexDirection: 'row',
