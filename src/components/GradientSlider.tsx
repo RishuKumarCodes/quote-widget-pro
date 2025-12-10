@@ -38,7 +38,15 @@ const GradientSlider: React.FC<Props> = ({
                             ))}
                         </LinearGradient>
                     </Defs>
-                    <Rect x="0" y="0" width="100%" height="100%" rx={20} ry={20} fill="url(#grad)" />
+                    <Rect
+                        x="0"
+                        y="0"
+                        width="100%"
+                        height="100%"
+                        rx={10}
+                        ry={10}
+                        fill="url(#grad)"
+                    />
                 </Svg>
             </View>
             <Slider
@@ -50,22 +58,35 @@ const GradientSlider: React.FC<Props> = ({
                 onValueChange={onValueChange}
                 minimumTrackTintColor="transparent"
                 maximumTrackTintColor="transparent"
-                thumbTintColor="#fff" // Clean white thumb
+                thumbTintColor="transparent"
             />
+            {/* Custom Thumb Indicator */}
+            <View
+                style={[
+                    styles.customThumb,
+                    {
+                        left: `${((value - minimumValue) / (maximumValue - minimumValue)) * 100}%`,
+                    }
+                ]}
+            >
+                <View style={styles.thumbStick} />
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        height: 40,
+        height: 60, // Increased to accommodate taller thumb
         justifyContent: 'center',
         width: '100%',
     },
     gradientContainer: {
-        ...StyleSheet.absoluteFillObject,
-        height: 20, // Height of the track
-        top: 10,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        height: 20,
+        top: 20,
         borderRadius: 10,
         overflow: 'hidden',
     },
@@ -76,6 +97,21 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 40,
         zIndex: 1,
+    },
+    customThumb: {
+        position: 'absolute',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 0,
+        pointerEvents: 'none',
+    },
+    thumbStick: {
+        width: 14,
+        height: 48,
+        backgroundColor: '#201868ff',
+        borderRadius: 10,
+        borderWidth: 4,
+        borderColor: "#e4ebffff",
     },
 });
 

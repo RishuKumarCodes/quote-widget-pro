@@ -12,7 +12,7 @@ interface WidgetSettings {
   fontFamily: string;
   fontSize: number;
   textColor: string;
-  isBold: boolean;
+  fontWeight: string;
   backgroundColor: string;
   backgroundType: string;
   backgroundOpacity: number;
@@ -71,12 +71,36 @@ const WidgetPreview: React.FC<Props> = ({ settings }) => {
     return settings.textColor;
   };
 
-  const getTextStyle = (): TextStyle => ({
-    color: getTextColor(),
-    fontSize: settings.fontSize,
-    fontFamily: settings.fontFamily,
-    fontWeight: settings.isBold ? 'bold' : 'normal',
-  });
+  const getTextStyle = (): TextStyle => {
+    // Map font weights to system font families to match Native Widget implementation
+    let fontFamily = settings.fontFamily;
+    let fontWeight: TextStyle['fontWeight'] = settings.fontWeight as any;
+
+    if (settings.fontWeight === '200') {
+      fontFamily = 'sans-serif-thin';
+      fontWeight = 'normal';
+    } else if (settings.fontWeight === '400') {
+      // 400 is normal/regular. 
+      // User calls it Medium (400), but 400 is standard.
+      // We'll just let it use the default fontFamily (sans-serif) or whatever is set.
+      // If we want it to look "Medium" (500) but value is 400? 
+      // No, user said weight should be 400. 400 is normal.
+      fontWeight = 'normal';
+    } else if (settings.fontWeight === '500') {
+      fontFamily = 'sans-serif-medium';
+      fontWeight = 'normal';
+    } else if (settings.fontWeight === '900') {
+      fontFamily = 'sans-serif-black';
+      fontWeight = 'normal';
+    }
+
+    return {
+      color: getTextColor(),
+      fontSize: settings.fontSize,
+      fontFamily: fontFamily,
+      fontWeight: fontWeight,
+    };
+  };
 
   const getAuthorStyle = (): TextStyle => {
     const baseColor = getTextColor();
@@ -89,7 +113,7 @@ const WidgetPreview: React.FC<Props> = ({ settings }) => {
 
     return {
       color: authorColor,
-      fontSize: settings.fontSize - 2,
+      fontSize: settings.fontSize * 0.8,
       fontFamily: settings.fontFamily,
       fontStyle: 'italic',
     };
@@ -119,17 +143,12 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
   },
   quoteText: {
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 8,
   },
   authorText: {
     textAlign: 'center',
-    marginTop: 4,
   },
 });
 

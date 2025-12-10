@@ -13,6 +13,10 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.SystemClock;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
+import android.text.style.TypefaceSpan;
 import android.util.TypedValue;
 import android.widget.RemoteViews;
 
@@ -84,7 +88,12 @@ public class QuoteWidgetProvider extends AppWidgetProvider {
 
         String fontFamily = prefs.getString("font_family" + settingsSuffix, "sans-serif");
         int fontSize = prefs.getInt("font_size" + settingsSuffix, 14);
-        boolean isBold = prefs.getBoolean("is_bold" + settingsSuffix, false);
+
+        // Try to get specific font weight, otherwise fallback to default (widget 0)
+        // font weight
+        String globalFontWeight = prefs.getString("font_weight_0", "400");
+        String fontWeight = prefs.getString("font_weight" + settingsSuffix, globalFontWeight);
+
         String backgroundType = prefs.getString("background_type" + settingsSuffix, "solid");
         int borderRadius = prefs.getInt("border_radius" + settingsSuffix, 12);
         float backgroundOpacity = prefs.getFloat("background_opacity" + settingsSuffix, 1.0f);
@@ -114,18 +123,33 @@ public class QuoteWidgetProvider extends AppWidgetProvider {
                 ", backgroundColor=" + String.format("#%08X", backgroundColor) +
                 ", borderRadius=" + borderRadius +
                 ", backgroundOpacity=" + backgroundOpacity +
+                ", fontWeight=" + fontWeight +
                 ", hasWidgetSettings=" + hasWidgetSettings);
 
         // Get random quote
         Quote quote = getRandomQuote(context);
 
         // Update quote text
-        views.setTextViewText(R.id.quote_text, quote.text);
+        // Update quote text with styling
+        views.setTextViewText(R.id.quote_text, applyFontWeight(quote.text, fontWeight));
+        views.setTextViewText(R.id.quote_author, applyFontWeight("— " + quote.author, fontWeight)); // Apply same weight
+                                                                                                    // to author? Or
+                                                                                                    // keep it
+                                                                                                    // normal/italic?
+        // Author usually italic. Applying weight might overlap.
+        // Let's just set text for author normally as it has italic style in XML, but
+        // user might want bold.
+        // If we use TypefaceSpan it overrides fontFamily in XML but not style.
+        // Let's stick to simple text for author for now as user asked for font weight
+        // implementation generally.
+        // Reverting author to simple text to avoid conflict with italic, or applying
+        // generic weight?
+        // Let's just apply to quote text primarily.
         views.setTextViewText(R.id.quote_author, "— " + quote.author);
 
         // Apply text styling
         views.setTextViewTextSize(R.id.quote_text, TypedValue.COMPLEX_UNIT_SP, fontSize);
-        views.setTextViewTextSize(R.id.quote_author, TypedValue.COMPLEX_UNIT_SP, fontSize - 2);
+        views.setTextViewTextSize(R.id.quote_author, TypedValue.COMPLEX_UNIT_SP, fontSize * 0.8f);
         views.setTextColor(R.id.quote_text, textColor);
         views.setTextColor(R.id.quote_author, adjustColorOpacity(textColor, 0.7f));
 
@@ -342,7 +366,7 @@ public class QuoteWidgetProvider extends AppWidgetProvider {
         editor.remove("font_size_" + appWidgetId);
         editor.remove("text_color_" + appWidgetId);
         editor.remove("text_color_type_" + appWidgetId);
-        editor.remove("is_bold_" + appWidgetId);
+        editor.remove("font_weight_" + appWidgetId);
         editor.remove("background_color_" + appWidgetId);
         editor.remove("background_color_type_" + appWidgetId);
         editor.remove("background_type_" + appWidgetId);
@@ -352,6 +376,56 @@ public class QuoteWidgetProvider extends AppWidgetProvider {
         editor.remove("auto_theme_" + appWidgetId);
 
         editor.apply();
+    }
+
+    private static CharSequence applyFontWeight(String text, String fontWeight) {
+        SpannableString spannable = new SpannableString(text);
+
+        // Default to sans-serif
+        String family = "sans-serif";
+        int style = Typeface.NORMAL;
+
+        switch (fontWeight) {
+            case "100": // Thin
+            case "200": // User requested Thin as 200
+            case "thin":
+                family = "sans-serif-thin";
+                break;
+            case "300": // Light
+            case "light":
+                family = "sans-serif-light";
+                break;
+            case "400": // Normal / User requested Medium as 400
+            case "normal":
+            case "regular":
+                // Default is sans-serif normal
+                break;
+            case "500": // Medium
+            case "medium":
+                family = "sans-serif-medium";
+                break;
+            case "700": // Bold
+            case "bold":
+                style = Typeface.BOLD;
+                break;
+            case "900": // Black/ExtraBold
+            case "800":
+            case "extrabold":
+                family = "sans-serif-black";
+                break;
+            default:
+                break;
+        }
+
+        if (style == Typeface.BOLD) {
+            spannable.setSpan(new StyleSpan(Typeface.BOLD), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+
+        if (!family.equals("sans-serif")) {
+            spannable.setSpan(new TypefaceSpan(family), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+
+        return spannable;
     }
 
     static class Quote {

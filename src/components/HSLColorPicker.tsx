@@ -8,10 +8,9 @@ interface Props {
     label?: string;
 }
 
-// Helper functions (simplified for brevity, a full library might be better but let's keep it self-contained)
 const hexToHsl = (hex: string): { h: number; s: number; l: number } => {
     let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return { h: 0, s: 0, l: 0 };
+    if (!result) return { h: 0, s: 100, l: 50 }; // Default to S=100
     let r = parseInt(result[1], 16) / 255;
     let g = parseInt(result[2], 16) / 255;
     let b = parseInt(result[3], 16) / 255;
@@ -42,15 +41,18 @@ const hslToHex = (h: number, s: number, l: number): string => {
     return `#${f(0)}${f(8)}${f(4)}`;
 };
 
-const HSLColorPicker: React.FC<Props> = ({ color, onColorChange, label }) => {
-    const [hsl, setHsl] = useState(hexToHsl(color === 'device' ? '#000000' : color));
+const HSLColorPicker: React.FC<Props> = ({ color, onColorChange }) => {
+    // Initial state: respect input color but force S=100 if we want to ensure vivid colors?
+    // User requested: "don't make it grayscale", "same color as selected hue"
+    const initialHsl = hexToHsl(color === 'device' ? '#000000' : color);
+    const [hsl, setHsl] = useState({ ...initialHsl, s: 100 });
 
     useEffect(() => {
         if (color !== 'device') {
             const newHsl = hexToHsl(color);
-            // Only update if significantly different to avoid loop/rounding jitter
-            if (Math.abs(newHsl.h - hsl.h) > 1 || Math.abs(newHsl.s - hsl.s) > 1 || Math.abs(newHsl.l - hsl.l) > 1) {
-                setHsl(newHsl);
+            // Only update if significantly different to prevent loop, but enforce S=100
+            if (Math.abs(newHsl.h - hsl.h) > 1 || Math.abs(newHsl.l - hsl.l) > 1) {
+                setHsl({ ...newHsl, s: 100 });
             }
         }
     }, [color]);
@@ -60,54 +62,43 @@ const HSLColorPicker: React.FC<Props> = ({ color, onColorChange, label }) => {
         onColorChange(hslToHex(h, s, l));
     };
 
-    // Hue gradient colors
     const hueColors = [
         '#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#ff0000'
     ];
 
-    // Saturation gradient colors (grayscale to full color at current Hue)
-    const saturationColors = [
-        hslToHex(hsl.h, 0, 50), // Grayish
-        hslToHex(hsl.h, 100, 50)  // Full saturation
+    // Brightness gradient: Black -> Pure Color (L=50) -> White
+    const brightnessColors = [
+        '#000000',
+        hslToHex(hsl.h, 100, 50), // Pure color at 50% lightness works best as midpoint
+        '#ffffff'
     ];
 
     return (
-        <View style={styles.container}>
-            {label && <Text style={styles.label}>{label}</Text>}
-
-            <Text style={styles.subLabel}>Hue</Text>
+        <>
+            <Text style={styles.label}>Hue</Text>
             <GradientSlider
                 value={hsl.h}
                 minimumValue={0}
                 maximumValue={360}
                 colors={hueColors}
-                onValueChange={(h) => updateColor(h, hsl.s, 50)} // Default Lightness to 50% for pure colors
+                onValueChange={(h) => updateColor(h, 100, hsl.l)} // Keep S=100
             />
 
-            <Text style={styles.subLabel}>Saturation</Text>
+            <Text style={styles.label}>Brightness</Text>
             <GradientSlider
-                value={hsl.s}
+                value={hsl.l}
                 minimumValue={0}
                 maximumValue={100}
-                colors={saturationColors} // Dynamic based on Hue
-                onValueChange={(s) => updateColor(hsl.h, s, 50)}
+                colors={brightnessColors}
+                onValueChange={(l) => updateColor(hsl.h, 100, l)} // Keep S=100
             />
-        </View>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        marginVertical: 10,
-    },
     label: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#495057',
-        marginBottom: 5,
-    },
-    subLabel: {
-        fontSize: 12,
+        fontSize: 14,
         color: '#6c757d',
         marginTop: 5,
         marginBottom: 0,

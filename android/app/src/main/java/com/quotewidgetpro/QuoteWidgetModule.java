@@ -29,6 +29,42 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
         return MODULE_NAME;
     }
 
+    private String toCssColor(int color) {
+        // Convert Android ARGB to CSS RGBA
+        // Android: 0xAARRGGBB
+        // CSS: #RRGGBBAA
+        int a = (color >> 24) & 0xFF;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        return String.format("#%02X%02X%02X%02X", r, g, b, a);
+    }
+
+    private int parseCssColor(String cssColor) {
+        // Parse CSS color (#RRGGBB or #RRGGBBAA) to Android int (ARGB)
+        if (cssColor == null || !cssColor.startsWith("#")) {
+            return Color.BLACK; // Default fail safe
+        }
+
+        try {
+            if (cssColor.length() == 7) {
+                // #RRGGBB
+                return Color.parseColor(cssColor);
+            } else if (cssColor.length() == 9) {
+                // #RRGGBBAA
+                long val = Long.parseLong(cssColor.substring(1), 16);
+                int r = (int) ((val >> 24) & 0xFF);
+                int g = (int) ((val >> 16) & 0xFF);
+                int b = (int) ((val >> 8) & 0xFF);
+                int a = (int) (val & 0xFF);
+                return Color.argb(a, r, g, b);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("QuoteWidget", "Error parsing color: " + cssColor, e);
+        }
+        return Color.parseColor(cssColor); // Fallback to standard parse
+    }
+
     @ReactMethod
     public void updateWidgetSettings(int widgetId, ReadableMap settings, Promise promise) {
         try {
@@ -54,15 +90,15 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
                 } else {
                     editor.putString("text_color_type_" + widgetId, "custom");
                     try {
-                        editor.putInt("text_color_" + widgetId, Color.parseColor(textColor));
+                        editor.putInt("text_color_" + widgetId, parseCssColor(textColor));
                     } catch (IllegalArgumentException e) {
                         android.util.Log.w("QuoteWidget", "Invalid color format: " + textColor + ", using default");
                         editor.putInt("text_color_" + widgetId, Color.BLACK);
                     }
                 }
             }
-            if (settings.hasKey("isBold")) {
-                editor.putBoolean("is_bold_" + widgetId, settings.getBoolean("isBold"));
+            if (settings.hasKey("fontWeight")) {
+                editor.putString("font_weight_" + widgetId, settings.getString("fontWeight"));
             }
             if (settings.hasKey("backgroundColor")) {
                 String bgColor = settings.getString("backgroundColor");
@@ -72,7 +108,7 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
                 } else {
                     editor.putString("background_color_type_" + widgetId, "custom");
                     try {
-                        editor.putInt("background_color_" + widgetId, Color.parseColor(bgColor));
+                        editor.putInt("background_color_" + widgetId, parseCssColor(bgColor));
                     } catch (IllegalArgumentException e) {
                         android.util.Log.w("QuoteWidget", "Invalid color format: " + bgColor + ", using default");
                         editor.putInt("background_color_" + widgetId, Color.WHITE);
@@ -95,11 +131,14 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
                 editor.putBoolean("auto_theme_" + widgetId, settings.getBoolean("autoTheme"));
             }
 
-            editor.apply();
+            // Use commit() to ensure data is written synchronously before we trigger an
+            // update
+            editor.commit();
 
             android.util.Log.d("QuoteWidget", "Settings saved for widget " + widgetId);
 
-            // Update all widgets if widgetId is 0 (default settings) or update specific widget
+            // Update all widgets if widgetId is 0 (default settings) or update specific
+            // widget
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             if (widgetId == 0) {
                 // Update all widgets with default settings
@@ -125,7 +164,7 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
                 updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
             } else {
                 // Update specific widget
-                updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{widgetId});
+                updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { widgetId });
             }
             context.sendBroadcast(updateIntent);
 
@@ -154,34 +193,34 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
             SharedPreferences prefs = context.getSharedPreferences("widget_prefs", Context.MODE_PRIVATE);
 
             WritableMap settings = new WritableNativeMap();
-            
+
             // Check if widget-specific settings exist, otherwise use default settings
             boolean hasWidgetSettings = prefs.contains("font_family_" + widgetId);
             String suffix = hasWidgetSettings ? "_" + widgetId : "_0";
-            
+
             settings.putString("fontFamily", prefs.getString("font_family" + suffix, "sans-serif"));
             settings.putInt("fontSize", prefs.getInt("font_size" + suffix, 14));
-            
+
             // Handle text color
             String textColorType = prefs.getString("text_color_type" + suffix, "custom");
             if ("device".equals(textColorType)) {
                 settings.putString("textColor", "device");
             } else {
                 int textColorInt = prefs.getInt("text_color" + suffix, Color.BLACK);
-                settings.putString("textColor", String.format("#%08X", (0xFFFFFFFF & textColorInt)));
+                settings.putString("textColor", toCssColor(textColorInt));
             }
-            
-            settings.putBoolean("isBold", prefs.getBoolean("is_bold" + suffix, false));
-            
+
+            settings.putString("fontWeight", prefs.getString("font_weight" + suffix, "400"));
+
             // Handle background color
             String backgroundColorType = prefs.getString("background_color_type" + suffix, "custom");
             if ("device".equals(backgroundColorType)) {
                 settings.putString("backgroundColor", "device");
             } else {
                 int backgroundColorInt = prefs.getInt("background_color" + suffix, Color.WHITE);
-                settings.putString("backgroundColor", String.format("#%08X", (0xFFFFFFFF & backgroundColorInt)));
+                settings.putString("backgroundColor", toCssColor(backgroundColorInt));
             }
-            
+
             settings.putString("backgroundType", prefs.getString("background_type" + suffix, "solid"));
             settings.putDouble("backgroundOpacity", prefs.getFloat("background_opacity" + suffix, 1.0f));
             settings.putInt("borderRadius", prefs.getInt("border_radius" + suffix, 12));
@@ -218,12 +257,12 @@ public class QuoteWidgetModule extends ReactContextBaseJavaModule {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             ComponentName component = new ComponentName(context, QuoteWidgetProvider.class);
             int[] widgetIds = appWidgetManager.getAppWidgetIds(component);
-            
+
             WritableMap result = new WritableNativeMap();
             for (int i = 0; i < widgetIds.length; i++) {
                 result.putInt(String.valueOf(i), widgetIds[i]);
             }
-            
+
             promise.resolve(result);
         } catch (Exception e) {
             promise.reject("GET_IDS_ERROR", "Failed to get widget IDs: " + e.getMessage());

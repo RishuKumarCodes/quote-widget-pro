@@ -20,7 +20,7 @@ interface WidgetSettings {
   fontFamily: string;
   fontSize: number;
   textColor: string;
-  isBold: boolean;
+  fontWeight: string;
   backgroundColor: string;
   backgroundType: string;
   backgroundOpacity: number;
@@ -35,7 +35,7 @@ const HomeScreen: React.FC = () => {
     fontFamily: 'sans-serif',
     fontSize: 14,
     textColor: '#000000',
-    isBold: false,
+    fontWeight: '400',
     backgroundColor: '#FFFFFF',
     backgroundType: 'solid',
     backgroundOpacity: 1,

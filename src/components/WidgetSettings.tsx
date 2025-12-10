@@ -4,16 +4,16 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Switch, // Keeping Switch if needed later
+  Switch,
 } from 'react-native';
 import HSLColorPicker from './HSLColorPicker';
-import SimpleSlider from './Slider';
+import SolidSlider from './SolidSlider';
 
 interface WidgetSettings {
   fontFamily: string;
   fontSize: number;
   textColor: string;
-  isBold: boolean;
+  fontWeight: string;
   backgroundColor: string;
   backgroundType: string;
   backgroundOpacity: number;
@@ -58,6 +58,20 @@ const OptionButton: React.FC<{
   </TouchableOpacity>
 );
 
+const getBorderRadiusLabel = (value: number): string => {
+  const map: { [key: number]: string } = {
+    0: 'None',
+    8: 'Sm',
+    16: 'Md',
+    24: 'Lg',
+    32: 'XL',
+    40: '2XL',
+    48: '3XL',
+    56: '4XL',
+  };
+  return map[value] || `${value}dp`;
+};
+
 const WidgetSettingsComponent: React.FC<Props> = ({
   settings,
   onSettingsChange,
@@ -79,6 +93,13 @@ const WidgetSettingsComponent: React.FC<Props> = ({
     { label: '24 hours', value: 1440 },
   ];
 
+  const fontWeights = [
+    { label: 'Thin', value: '200' },
+    { label: 'Medium', value: '400' },
+    { label: 'Bold', value: 'bold' },
+    { label: 'ExtraBold', value: '900' },
+  ];
+
   const updateLocalSetting = <K extends keyof WidgetSettings>(
     key: K,
     value: WidgetSettings[K],
@@ -92,21 +113,35 @@ const WidgetSettingsComponent: React.FC<Props> = ({
     <View style={styles.container}>
       <SettingSection title="Text Style">
         <View style={styles.sliderContainer}>
-          <Text style={styles.sliderLabel}>
+          <Text style={styles.label}>
             Font Size: {localSettings.fontSize}sp
           </Text>
-          <SimpleSlider
+          <SolidSlider
             value={localSettings.fontSize}
             minimumValue={10}
-            maximumValue={24}
+            maximumValue={40}
             step={1}
+            trackColor="#E3E5EB"
+            filledColor="#0052CC"
             onValueChange={(value: number) =>
               updateLocalSetting('fontSize', value)
             }
           />
         </View>
+        <View style={styles.sliderContainer}>
+          <Text style={styles.label}>Font Weight</Text>
+          <View style={styles.optionGrid}>
+            {fontWeights.map((fw) => (
+              <OptionButton
+                key={fw.value}
+                label={fw.label}
+                selected={localSettings.fontWeight === fw.value}
+                onPress={() => updateLocalSetting('fontWeight', fw.value)}
+              />
+            ))}
+          </View>
+        </View>
         <HSLColorPicker
-          label="Text Color"
           color={localSettings.textColor}
           onColorChange={(color) => updateLocalSetting('textColor', color)}
         />
@@ -114,47 +149,42 @@ const WidgetSettingsComponent: React.FC<Props> = ({
 
       <SettingSection title="Background">
         <HSLColorPicker
-          label="Background Color"
           color={localSettings.backgroundColor}
           onColorChange={(color) => updateLocalSetting('backgroundColor', color)}
         />
         <View style={styles.sliderContainer}>
-          <Text style={styles.sliderLabel}>
-            Background Opacity:{' '}
+          <Text style={styles.label}>
+            Transparency:{' '}
             {Math.round(localSettings.backgroundOpacity * 100)}%
           </Text>
-          <SimpleSlider
+          <SolidSlider
             value={localSettings.backgroundOpacity}
             minimumValue={0}
             maximumValue={1}
             step={0.05}
+            trackColor="#E3E5EB"
+            filledColor="#0052CC"
             onValueChange={(value: number) =>
               updateLocalSetting('backgroundOpacity', value)
             }
           />
         </View>
 
-        <View style={styles.optionGrid}>
-          <Text style={styles.sliderLabel}>Border Radius</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
-            {[
-              { label: 'None', value: 0 },
-              { label: 'Sm', value: 8 },
-              { label: 'Md', value: 16 },
-              { label: 'Lg', value: 24 },
-              { label: 'XL', value: 32 },
-              { label: '2XL', value: 40 },
-              { label: '3XL', value: 48 },
-              { label: '4XL', value: 56 },
-            ].map(radius => (
-              <OptionButton
-                key={radius.value}
-                label={radius.label}
-                selected={localSettings.borderRadius === radius.value}
-                onPress={() => updateLocalSetting('borderRadius', radius.value)}
-              />
-            ))}
-          </View>
+        <View style={styles.sliderContainer}>
+          <Text style={styles.label}>
+            Border Radius: {getBorderRadiusLabel(localSettings.borderRadius)}
+          </Text>
+          <SolidSlider
+            value={localSettings.borderRadius}
+            minimumValue={0}
+            maximumValue={56}
+            step={8}
+            trackColor="#E3E5EB"
+            filledColor="#0052CC"
+            onValueChange={(value: number) =>
+              updateLocalSetting('borderRadius', value)
+            }
+          />
         </View>
       </SettingSection>
 
@@ -217,13 +247,13 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     marginTop: 15,
-    alignItems: 'center',
   },
-  sliderLabel: {
+  label: {
     fontSize: 14,
-    color: '#495057',
-    marginBottom: 10,
-    textAlign: 'center',
+    color: '#6c757d',
+    marginTop: 5,
+    marginBottom: 2,
+    marginLeft: 2,
   },
   switchContainer: {
     flexDirection: 'row',
